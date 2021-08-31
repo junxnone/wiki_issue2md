@@ -55,8 +55,8 @@ runs:
         ---
         Title | ${{ inputs.title }}
         -- | --
-        Create Date | ${{ inputs.created_at }}
-        Update Date | ${{ inputs.updated_at }}
+        Create Date | `${{ inputs.created_at }}`
+        Update Date | `${{ inputs.updated_at }}`
         ---
         ${{ inputs.body }}
         EOF
