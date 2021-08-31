@@ -53,7 +53,7 @@ runs:
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ---
-        Title: "${{ inputs.title }}"
+        Title | ${{ inputs.title }}
         -- | --
         Create Date | ${{ inputs.created_at }}
         Update Date | ${{ inputs.updated_at }}
