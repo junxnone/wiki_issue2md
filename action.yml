@@ -43,6 +43,7 @@ runs:
   using: "composite"
   steps:
     - id: generate-markdown-file
+      if: ${{ github.event.label.name != 'index' }}
       name: Turn comment into file
       shell: bash
       run: |
@@ -58,6 +59,19 @@ runs:
         Create Date | `${{ inputs.created_at }}`
         Update Date | `${{ inputs.updated_at }}`
         ---
+        ${{ inputs.body }}
+        EOF
+    - id: generate-index-markdown-file
+      if: ${{ github.event.label.name == 'index' }}
+      name: Turn comment into file
+      shell: bash
+      run: |
+        DATE="${{ inputs.created_at }}"
+        mkdir -p ${{ inputs.dir }}
+        # useing '' to wrap the title to escapse backticks
+        # and quates to wrap title in post body is to escapse backticks in jekyll building
+        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
+        cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
     - name: Push changes to repo
