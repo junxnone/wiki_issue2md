@@ -44,7 +44,7 @@ runs:
   steps:
     - id: generate-markdown-file
       name: Turn comment into file
-      if: ${{ github.event.label.name != 'index' }}
+      if: ${{ inputs.label_name != 'index' }}
       shell: bash
       run: |
         DATE="${{ inputs.created_at }}"
@@ -63,7 +63,7 @@ runs:
         EOF
     - id: generate-index-markdown-file
       name: Turn comment into file
-      if: ${{ github.event.label.name == 'index' }}
+      if: ${{ inputs.label_name == 'index' }}
       shell: bash
       run: |
         DATE="${{ inputs.created_at }}"
