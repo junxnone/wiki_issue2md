@@ -61,7 +61,8 @@ runs:
         -- | --
         Create Date | `${{ inputs.created_at }}`
         Update Date | `${{ inputs.updated_at }}`
-        Edit Link | `<a href="https://github.com/${{ github.repository }}/issues/${{ inputs.number }}">edit</a>`
+        
+        Edit [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         ---
         ${{ inputs.body }}
         EOF
