@@ -63,6 +63,7 @@ runs:
         Update Date | `${{ inputs.updated_at }}`
         
         Edit [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
+        
         ---
         ${{ inputs.body }}
         EOF
