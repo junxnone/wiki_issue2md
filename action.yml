@@ -36,6 +36,9 @@ inputs:
   body:
     description: "github.event.issue.body"
     required: true
+  number:
+    description: "github.event.issue.bumber"
+    required: true
   actor:
     description: "github.actor"
     required: true
@@ -58,6 +61,7 @@ runs:
         -- | --
         Create Date | `${{ inputs.created_at }}`
         Update Date | `${{ inputs.updated_at }}`
+        Edit Link | `[edit](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})`
         ---
         ${{ inputs.body }}
         EOF
