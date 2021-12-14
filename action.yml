@@ -66,6 +66,17 @@ runs:
         ---
         ${{ inputs.body }}
         EOF
+        elif [ "${{ inputs.title }}" != "README" ];then
+        cat <<'EOF' >  docs/"${POST_TITLE}".md
+        ---
+        Title | ${{ inputs.title }}
+        -- | --
+        Update Date | `${{ inputs.updated_at }}`
+        Edit link | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
+        
+        ---
+        ${{ inputs.body }}
+        EOF
         else
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
