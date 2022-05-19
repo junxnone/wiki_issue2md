@@ -63,8 +63,8 @@ runs:
         ---
         Title | ${{ inputs.title }}
         -- | --
-        Update Date | `${{ inputs.updated_at }}`
-        Edit link | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
+        Last Modify @ | `${{ inputs.updated_at }}`
+        Edit @ | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         
         ---
         ${{ inputs.body }}
@@ -74,9 +74,9 @@ runs:
         ---
         Title | ${{ inputs.title }}
         -- | --
-        Create Date | `${{ inputs.created_at }}`
-        Update Date | `${{ inputs.updated_at }}`
-        Edit link | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
+        Created @ | `${{ inputs.created_at }}`
+        Last Modify @| `${{ inputs.updated_at }}`
+        Edit @| [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         
         ---
         ${{ inputs.body }}
