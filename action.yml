@@ -76,6 +76,7 @@ runs:
         -- | --
         Created @ | `${{ inputs.created_at }}`
         Last Modify @| `${{ inputs.updated_at }}`
+        Labels | `${{ inputs.label_name }}`
         Edit @| [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         
         ---
