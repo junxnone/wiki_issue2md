@@ -42,6 +42,9 @@ inputs:
   actor:
     description: "github.actor"
     required: true
+  nohead:
+    description: "no create/update/..."
+    required: true
 runs:
   using: "composite"
   steps:
@@ -55,6 +58,10 @@ runs:
         # and quates to wrap title in post body is to escapse backticks in jekyll building
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
         if [ "${{ inputs.title }}" == "_sidebar" ];then
+        cat <<'EOF' > docs/"${POST_TITLE}".md
+        ${{ inputs.body }}
+        EOF
+        elif [ ${{inputs.nohead}} ];then
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
