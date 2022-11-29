@@ -61,7 +61,7 @@ runs:
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
-        elif [ ${{inputs.nohead}} -eq true ];then
+        elif [ ${{inputs.nohead}} == "true" ];then
         echo "nohead is ${{inputs.nohead}} "
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
