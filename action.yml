@@ -62,6 +62,7 @@ runs:
         ${{ inputs.body }}
         EOF
         elif [ ${{inputs.nohead}} ];then
+        echo "nohead is ${{inputs.nohead}} "
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
