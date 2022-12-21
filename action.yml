@@ -58,7 +58,7 @@ runs:
         # and quates to wrap title in post body is to escapse backticks in jekyll building
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
         if [ "${{ inputs.title }}" == "sidebar" ];then
-        cat <<'EOF' > docs/"${POST_TITLE}".md
+        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         
         ---
@@ -71,11 +71,11 @@ runs:
         fi
         POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
 
-        cat <<'EOF' > docs/"${POST_TITLE}".md
+        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
         elif [ "${{ inputs.title }}" == "README" ];then
-        cat <<'EOF' >  docs/"${POST_TITLE}".md
+        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
         -- | --
@@ -91,7 +91,7 @@ runs:
           ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
         fi
         POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
-        cat <<'EOF' >  docs/"${POST_TITLE}".md
+        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
         -- | --
