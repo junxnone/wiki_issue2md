@@ -57,20 +57,25 @@ runs:
         # useing '' to wrap the title to escapse backticks
         # and quates to wrap title in post body is to escapse backticks in jekyll building
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
-        if [ "${{ inputs.title }}" == "_sidebar" ];then
-        cat <<'EOF' > docs/"${POST_TITLE}".md
+        if [ "${{ inputs.title }}" == "sidebar" ];then
+        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         
         ---
         
-        [![](https://img.shields.io/badge/%2B-Edit%20Sidebar-brightgreen)](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         EOF
         elif [ ${{inputs.nohead}} == "true" ];then
-        cat <<'EOF' > docs/"${POST_TITLE}".md
+        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
+        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
+          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+        fi
+        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
+
+        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
         elif [ "${{ inputs.title }}" == "README" ];then
-        cat <<'EOF' >  docs/"${POST_TITLE}".md
+        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
         -- | --
@@ -81,7 +86,12 @@ runs:
         ${{ inputs.body }}
         EOF
         else
-        cat <<'EOF' >  docs/"${POST_TITLE}".md
+        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
+        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
+          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+        fi
+        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
+        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
         -- | --
