@@ -82,7 +82,9 @@ runs:
         EOF
         else
         ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
-        ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
+          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+        fi
         POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
         cat <<'EOF' >  docs/"${POST_TITLE}".md
         ---
