@@ -66,6 +66,12 @@ runs:
         [![](https://img.shields.io/badge/%2B-Edit%20Sidebar-brightgreen)](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         EOF
         elif [ ${{inputs.nohead}} == "true" ];then
+        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
+        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
+          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+        fi
+        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
+
         cat <<'EOF' > docs/"${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
