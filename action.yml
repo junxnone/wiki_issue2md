@@ -82,9 +82,9 @@ runs:
         EOF
         else
         ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
-        ls ${{ inputs.dir }}/$ISSUE4NUMBER_*
+        ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*
         echo $TITLE_ORG
-        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< $ISSUE4NUMBER_${{ inputs.title }})
+        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< ${ISSUE4NUMBER}_${{ inputs.title }})
         cat <<'EOF' >  docs/"${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
