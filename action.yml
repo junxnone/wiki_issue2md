@@ -81,7 +81,9 @@ runs:
         ${{ inputs.body }}
         EOF
         else
-        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'$(printf '%05d\n' ${{ inputs.number }})_${{ inputs.title }}')
+        TITLE_ORG=$(echo $(printf '%04d' ${{ inputs.number }})_${{ inputs.title }})
+        echo $TITLE_ORG
+        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< $TITLE_ORG)
         cat <<'EOF' >  docs/"${POST_TITLE}".md
         ---
         Title | ${{ inputs.title }}
