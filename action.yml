@@ -61,8 +61,6 @@ runs:
         cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         
-        ---
-        
         EOF
         elif [ ${{inputs.nohead}} == "true" ];then
         ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
