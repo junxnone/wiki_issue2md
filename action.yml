@@ -77,7 +77,7 @@ runs:
         ---
         Title | ${{ inputs.title }}
         -- | --
-        Last Modify @ | `${{ inputs.updated_at }}`
+        Updated @ | `${{ inputs.updated_at }}`
         Edit @ | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         
         ---
@@ -94,7 +94,7 @@ runs:
         Title | ${{ inputs.title }}
         -- | --
         Created @ | `${{ inputs.created_at }}`
-        Last Modify @| `${{ inputs.updated_at }}`
+        Updated @| `${{ inputs.updated_at }}`
         Labels | `${{ inputs.label_name }}`
         Edit @| [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
         
