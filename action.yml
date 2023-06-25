@@ -102,9 +102,14 @@ runs:
         ${{ inputs.body }}
         EOF
         fi
+        mkdir -p bk
+    - uses: docker://pandoc/latex:2.9
+      with:
+        args: -f gfm "${{ inputs.dir }}/${POST_TITLE}".md -o "${{ inputs.dir }}/bk/${POST_TITLE}".md --extract-media=media -w gfm
     - name: Push changes to repo
       shell: bash
       run: |
+        mv media "${{ inputs.dir }}/bk/"
         REMOTE=https://${{ inputs.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git config user.email "${{ inputs.actor }}@users.noreply.github.com"
         git config user.name "${{ inputs.actor }}"
