@@ -103,9 +103,10 @@ runs:
         EOF
         fi
         mkdir -p bk
+        echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
     - uses: docker://pandoc/latex:2.9
       with:
-        args: -f gfm "${{ inputs.dir }}/${POST_TITLE}".md -o "${{ inputs.dir }}/bk/${POST_TITLE}".md --extract-media=media -w gfm
+        args: -f gfm "${{ inputs.dir }}/${{ env.doc_title }}".md -o "${{ inputs.dir }}/bk/${{ env.doc_title }}".md --extract-media=media -w gfm
     - name: Push changes to repo
       shell: bash
       run: |
