@@ -105,6 +105,8 @@ runs:
         mkdir -p "${{ inputs.dir }}/bk/media"
         echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
         mkdir -p media
+        touch media/README.md
+        echo "# converted by pandoc">media/README.md
     - uses: docker://pandoc/latex:2.9
       with:
         args: -f gfm "${{ inputs.dir }}/${{ env.doc_title }}".md -o "${{ inputs.dir }}/bk/${{ env.doc_title }}".md --extract-media=media -w gfm
@@ -112,7 +114,7 @@ runs:
       shell: bash
       run: |
         
-        cp media/* "${{ inputs.dir }}/bk/media/" 2>/dev/null
+        cp media/* "${{ inputs.dir }}/bk/media/"
         REMOTE=https://${{ inputs.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git config user.email "${{ inputs.actor }}@users.noreply.github.com"
         git config user.name "${{ inputs.actor }}"
