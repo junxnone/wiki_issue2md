@@ -110,6 +110,7 @@ runs:
     - name: Push changes to repo
       shell: bash
       run: |
+        chmod -R 777 media
         mv media "${{ inputs.dir }}/bk/"
         REMOTE=https://${{ inputs.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git config user.email "${{ inputs.actor }}@users.noreply.github.com"
