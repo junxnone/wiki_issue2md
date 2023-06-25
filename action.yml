@@ -102,7 +102,7 @@ runs:
         ${{ inputs.body }}
         EOF
         fi
-        mkdir -p bk
+        mkdir -p "${{ inputs.dir }}/bk"
         echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
     - uses: docker://pandoc/latex:2.9
       with:
