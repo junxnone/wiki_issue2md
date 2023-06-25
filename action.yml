@@ -104,6 +104,7 @@ runs:
         fi
         mkdir -p "${{ inputs.dir }}/bk/media"
         echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
+        mkdir -p media
     - uses: docker://pandoc/latex:2.9
       with:
         args: -f gfm "${{ inputs.dir }}/${{ env.doc_title }}".md -o "${{ inputs.dir }}/bk/${{ env.doc_title }}".md --extract-media=media -w gfm
