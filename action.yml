@@ -52,69 +52,18 @@ runs:
       name: Turn comment into file
       shell: bash
       run: |
-        DATE="${{ inputs.created_at }}"
         mkdir -p ${{ inputs.dir }}
-        # useing '' to wrap the title to escapse backticks
-        # and quates to wrap title in post body is to escapse backticks in jekyll building
-        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
-        if [ "${{ inputs.title }}" == "sidebar" ];then
-        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
-        ${{ inputs.body }}
-        
-        EOF
-        elif [ ${{inputs.nohead}} == "true" ];then
-        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
-        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
-          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
-        fi
-        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
-
-        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
-        ${{ inputs.body }}
-        EOF
-        elif [ "${{ inputs.title }}" == "README" ];then
-        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
-        ---
-        Title | ${{ inputs.title }}
-        -- | --
-        Updated @ | `${{ inputs.updated_at }}`
-        Edit @ | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
-        
-        ---
-        ${{ inputs.body }}
-        EOF
-        else
         ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
         if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
           ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
         fi
         POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
         cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
-        ---
-        Title | ${{ inputs.title }}
-        -- | --
-        Created @ | `${{ inputs.created_at }}`
-        Updated @| `${{ inputs.updated_at }}`
-        Labels | `${{ inputs.label_name }}`
-        Edit @| [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
-        
-        ---
         ${{ inputs.body }}
         EOF
-        fi
-        mkdir -p "${{ inputs.dir }}/bk/media"
-        echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
-        mkdir -p media
-        touch media/README.md
-        echo "# converted by pandoc">media/README.md
-    - uses: docker://pandoc/latex:2.9
-      with:
-        args: -f gfm "${{ inputs.dir }}/${{ env.doc_title }}".md -o "${{ inputs.dir }}/bk/${{ env.doc_title }}".md --extract-media=media -w gfm
     - name: Push changes to repo
       shell: bash
       run: |
-        
-        cp media/* "${{ inputs.dir }}/bk/media/"
         REMOTE=https://${{ inputs.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git config user.email "${{ inputs.actor }}@users.noreply.github.com"
         git config user.name "${{ inputs.actor }}"
