@@ -66,6 +66,7 @@ runs:
         ROOTTITLE="# [${IN_TITLE}](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
         echo ${ROOTTITLE}
         sed -i '1i\'"${ROOTTITLE}"'' "${{ inputs.dir }}/${POST_TITLE}".md
+        sed -i '2d'  "${{ inputs.dir }}/${POST_TITLE}".md
     - name: Push changes to repo
       shell: bash
       run: |
