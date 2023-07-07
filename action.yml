@@ -63,7 +63,9 @@ runs:
         EOF
         sed -i 's/# /&[/' "${{ inputs.dir }}/${POST_TITLE}".md
         IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}')
+        echo ${IN_TITLE}
         EDIT_LINK="](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
+        echo ${EDIT_LINK}
         sed -i 's/'"${IN_TITLE}"'/&'"${EDIT_LINK}"'/' "${{ inputs.dir }}/${POST_TITLE}".md
     - name: Push changes to repo
       shell: bash
