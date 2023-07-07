@@ -61,6 +61,10 @@ runs:
         cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
+        sed -i 's/# /&[/' "${{ inputs.dir }}/${POST_TITLE}".md
+        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}')
+        EDIT_LINK="](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
+        sed -i 's/'"${IN_TITLE}"'/&'"${EDIT_LINK}"'/' "${{ inputs.dir }}/${POST_TITLE}".md
     - name: Push changes to repo
       shell: bash
       run: |
