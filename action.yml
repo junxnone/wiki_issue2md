@@ -61,7 +61,7 @@ runs:
         cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
-        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}'|tr -d '\n')
+        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}'|tr -d '\r\n')
         echo ${IN_TITLE}
         ROOTTITLE="# [${IN_TITLE}](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
         echo ${ROOTTITLE}
