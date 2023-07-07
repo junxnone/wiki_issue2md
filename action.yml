@@ -57,17 +57,14 @@ runs:
         if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
           ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
         fi
-        IN_TITLE=$(echo ${{ inputs.body }} |grep "# "|awk '{print $2}')
+        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
+        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
+        ${{ inputs.body }}
+        EOF
+        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}')
         echo ${IN_TITLE}
         ROOTTITLE="# [${IN_TITLE}](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
         echo ${ROOTTITLE}
-        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
-        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
-        ${ROOTTITLE}
-        ${{ inputs.body }}
-        EOF
-        sed -i 's/# /&[/' "${{ inputs.dir }}/${POST_TITLE}".md
-        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}')
     - name: Push changes to repo
       shell: bash
       run: |
