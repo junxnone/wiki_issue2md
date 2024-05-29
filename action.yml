@@ -61,12 +61,15 @@ runs:
         cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
         ${{ inputs.body }}
         EOF
-        IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}'|tr -d '\r\n')
-        echo ${IN_TITLE}
-        ROOTTITLE="# [${IN_TITLE}](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
-        echo ${ROOTTITLE}
-        sed -i '1i\'"${ROOTTITLE}"'' "${{ inputs.dir }}/${POST_TITLE}".md
-        sed -i '2d'  "${{ inputs.dir }}/${POST_TITLE}".md
+        # IN_TITLE=$(cat "${{ inputs.dir }}/${POST_TITLE}".md |grep "# "|awk '{print $2}'|tr -d '\r\n')
+        # echo ${IN_TITLE}
+        # ROOTTITLE="# [${IN_TITLE}](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
+        # echo ${ROOTTITLE}
+        ROOTLINK="](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})"
+        sed -i '1 s/# /&[/' "${{ inputs.dir }}/${POST_TITLE}".md
+        sed -i 's@$@&"${ROOTLINK}"@g' "${{ inputs.dir }}/${POST_TITLE}".md
+        # sed -i '1i\'"${ROOTTITLE}"'' "${{ inputs.dir }}/${POST_TITLE}".md
+        # sed -i '2d'  "${{ inputs.dir }}/${POST_TITLE}".md
     - name: Push changes to repo
       shell: bash
       run: |
