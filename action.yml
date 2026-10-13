@@ -65,15 +65,20 @@ runs:
         mkdir -p "$DIR"
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")
         if [ "$TITLE" == "sidebar" ]; then
+          if [ -f "$DIR/${POST_TITLE}.md" ]; then ACTION=update; else ACTION=new; fi
           printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
         elif [ "$NOHEAD" == "true" ]; then
           ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
           if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
+            ACTION=update
             rm -f "$DIR"/${ISSUE4NUMBER}_*
+          else
+            ACTION=new
           fi
           POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
           printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
         elif [ "$TITLE" == "README" ]; then
+          if [ -f "$DIR/${POST_TITLE}.md" ]; then ACTION=update; else ACTION=new; fi
           {
             printf '%s\n' "---"
             printf 'Title | %s\n' "$TITLE"
@@ -86,7 +91,10 @@ runs:
         else
           ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
           if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
+            ACTION=update
             rm -f "$DIR"/${ISSUE4NUMBER}_*
+          else
+            ACTION=new
           fi
           POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
           {
@@ -102,7 +110,14 @@ runs:
           } > "$DIR/${POST_TITLE}.md"
         fi
         mkdir -p "$DIR/bk/media"
-        echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
+        DELIM="EOF_${RANDOM}_${RANDOM}"
+        {
+          echo "doc_title=${POST_TITLE}"
+          echo "doc_action=${ACTION}"
+          echo "doc_display_title<<${DELIM}"
+          printf '%s\n' "$TITLE"
+          echo "${DELIM}"
+        } >> "$GITHUB_ENV"
         mkdir -p media
         echo "# converted by pandoc" > media/README.md
     - uses: docker://pandoc/latex:2.9
@@ -116,6 +131,8 @@ runs:
         ACTOR: ${{ inputs.actor }}
         TOKEN: ${{ inputs.GITHUB_TOKEN }}
         REPOSITORY: ${{ github.repository }}
+        ACTION: ${{ env.doc_action }}
+        DISPLAY_TITLE: ${{ env.doc_display_title }}
       run: |
         cp media/* "$DIR/bk/media/"
         REMOTE="https://${TOKEN}@github.com/${REPOSITORY}"
@@ -133,6 +150,11 @@ runs:
         fi
         git add "$DIR"
         git status
+        if [ "$ACTION" == "update" ]; then
+          COMMIT_MSG="更新了 ${DISPLAY_TITLE}"
+        else
+          COMMIT_MSG="新增了 ${DISPLAY_TITLE}"
+        fi
         # a rerun with identical content leaves nothing to commit, which is not a failure
-        git commit -m "Add new comment" || echo "nothing to commit"
+        git commit -m "$COMMIT_MSG" || echo "nothing to commit"
         git push "$REMOTE" "$BRANCH"
