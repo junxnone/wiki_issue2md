@@ -51,76 +51,88 @@ runs:
     - id: generate-markdown-file
       name: Turn comment into file
       shell: bash
+      env:
+        DIR: ${{ inputs.dir }}
+        TITLE: ${{ inputs.title }}
+        BODY: ${{ inputs.body }}
+        CREATED_AT: ${{ inputs.created_at }}
+        UPDATED_AT: ${{ inputs.updated_at }}
+        LABEL_NAME: ${{ inputs.label_name }}
+        NUMBER: ${{ inputs.number }}
+        NOHEAD: ${{ inputs.nohead }}
+        REPOSITORY: ${{ github.repository }}
       run: |
-        DATE="${{ inputs.created_at }}"
-        mkdir -p ${{ inputs.dir }}
-        # useing '' to wrap the title to escapse backticks
-        # and quates to wrap title in post body is to escapse backticks in jekyll building
-        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<<'${{ inputs.title }}')
-        if [ "${{ inputs.title }}" == "sidebar" ];then
-        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
-        ${{ inputs.body }}
-        
-        EOF
-        elif [ ${{inputs.nohead}} == "true" ];then
-        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
-        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
-          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
-        fi
-        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
-
-        cat <<'EOF' > "${{ inputs.dir }}/${POST_TITLE}".md
-        ${{ inputs.body }}
-        EOF
-        elif [ "${{ inputs.title }}" == "README" ];then
-        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
-        ---
-        Title | ${{ inputs.title }}
-        -- | --
-        Updated @ | `${{ inputs.updated_at }}`
-        Edit @ | [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
-        
-        ---
-        ${{ inputs.body }}
-        EOF
+        mkdir -p "$DIR"
+        POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")
+        if [ "$TITLE" == "sidebar" ]; then
+          printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
+        elif [ "$NOHEAD" == "true" ]; then
+          ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
+          if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
+            rm -f "$DIR"/${ISSUE4NUMBER}_*
+          fi
+          POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
+          printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
+        elif [ "$TITLE" == "README" ]; then
+          {
+            printf '%s\n' "---"
+            printf 'Title | %s\n' "$TITLE"
+            printf -- '-- | --\n'
+            printf 'Updated @ | `%s`\n' "$UPDATED_AT"
+            printf 'Edit @ | [here](https://github.com/%s/issues/%s)\n' "$REPOSITORY" "$NUMBER"
+            printf '\n---\n'
+            printf '%s\n' "$BODY"
+          } > "$DIR/${POST_TITLE}.md"
         else
-        ISSUE4NUMBER=$(printf '%04d' ${{ inputs.number }})
-        if ls ${{ inputs.dir }}/${ISSUE4NUMBER}_*.md &> /dev/null;then
-          ls ${{ inputs.dir }}/${ISSUE4NUMBER}_* |xargs -i rm {}
+          ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
+          if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
+            rm -f "$DIR"/${ISSUE4NUMBER}_*
+          fi
+          POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
+          {
+            printf '%s\n' "---"
+            printf 'Title | %s\n' "$TITLE"
+            printf -- '-- | --\n'
+            printf 'Created @ | `%s`\n' "$CREATED_AT"
+            printf 'Updated @| `%s`\n' "$UPDATED_AT"
+            printf 'Labels | `%s`\n' "$LABEL_NAME"
+            printf 'Edit @| [here](https://github.com/%s/issues/%s)\n' "$REPOSITORY" "$NUMBER"
+            printf '\n---\n'
+            printf '%s\n' "$BODY"
+          } > "$DIR/${POST_TITLE}.md"
         fi
-        POST_TITLE=${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< '${{ inputs.title }}')
-        cat <<'EOF' >  "${{ inputs.dir }}/${POST_TITLE}".md
-        ---
-        Title | ${{ inputs.title }}
-        -- | --
-        Created @ | `${{ inputs.created_at }}`
-        Updated @| `${{ inputs.updated_at }}`
-        Labels | `${{ inputs.label_name }}`
-        Edit @| [here](https://github.com/${{ github.repository }}/issues/${{ inputs.number }})
-        
-        ---
-        ${{ inputs.body }}
-        EOF
-        fi
-        mkdir -p "${{ inputs.dir }}/bk/media"
+        mkdir -p "$DIR/bk/media"
         echo "doc_title=${POST_TITLE}" >> "$GITHUB_ENV"
         mkdir -p media
-        touch media/README.md
-        echo "# converted by pandoc">media/README.md
+        echo "# converted by pandoc" > media/README.md
     - uses: docker://pandoc/latex:2.9
       with:
         args: -f gfm "${{ inputs.dir }}/${{ env.doc_title }}".md -o "${{ inputs.dir }}/bk/${{ env.doc_title }}".md --extract-media=media -w gfm
     - name: Push changes to repo
       shell: bash
+      env:
+        DIR: ${{ inputs.dir }}
+        BRANCH: ${{ inputs.branch }}
+        ACTOR: ${{ inputs.actor }}
+        TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        REPOSITORY: ${{ github.repository }}
       run: |
-        
-        cp media/* "${{ inputs.dir }}/bk/media/"
-        REMOTE=https://${{ inputs.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-        git config user.email "${{ inputs.actor }}@users.noreply.github.com"
-        git config user.name "${{ inputs.actor }}"
-        git pull ${REMOTE}
-        git checkout ${{ inputs.branch }}
-        git add "${{ inputs.dir }}"
+        cp media/* "$DIR/bk/media/"
+        REMOTE="https://${TOKEN}@github.com/${REPOSITORY}"
+        git config user.email "${ACTOR}@users.noreply.github.com"
+        git config user.name "$ACTOR"
+        # stash the generated/modified files (new + tracked) before switching branches, so none of it is lost
+        HAS_CHANGES=$(git status --porcelain)
+        if [ -n "$HAS_CHANGES" ]; then
+          git stash push --include-untracked -m "issue2post changes"
+        fi
+        git fetch "$REMOTE" "$BRANCH"
+        git checkout -B "$BRANCH" FETCH_HEAD
+        if [ -n "$HAS_CHANGES" ]; then
+          git stash pop
+        fi
+        git add "$DIR"
         git status
-        git commit -am "Add new comment"
-        git push ${REMOTE} ${{ inputs.branch }}
+        # a rerun with identical content leaves nothing to commit, which is not a failure
+        git commit -m "Add new comment" || echo "nothing to commit"
+        git push "$REMOTE" "$BRANCH"
