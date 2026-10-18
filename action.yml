@@ -64,6 +64,9 @@ runs:
       run: |
         mkdir -p "$DIR"
         POST_TITLE=$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")
+        # files this issue may have written under a previous title; cleaned at push time
+        # against the freshly fetched tree, not here
+        STALE_PREFIX=""
         if [ "$TITLE" == "sidebar" ]; then
           if [ -f "$DIR/${POST_TITLE}.md" ]; then ACTION=update; else ACTION=new; fi
           printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
@@ -71,10 +74,10 @@ runs:
           ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
           if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
             ACTION=update
-            rm -f "$DIR"/${ISSUE4NUMBER}_*
           else
             ACTION=new
           fi
+          STALE_PREFIX="${ISSUE4NUMBER}_"
           POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
           printf '%s\n' "$BODY" > "$DIR/${POST_TITLE}.md"
         elif [ "$TITLE" == "README" ]; then
@@ -92,10 +95,10 @@ runs:
           ISSUE4NUMBER=$(printf '%04d' "$NUMBER")
           if ls "$DIR"/${ISSUE4NUMBER}_*.md &> /dev/null; then
             ACTION=update
-            rm -f "$DIR"/${ISSUE4NUMBER}_*
           else
             ACTION=new
           fi
+          STALE_PREFIX="${ISSUE4NUMBER}_"
           POST_TITLE="${ISSUE4NUMBER}_$(sed -E 's/[[:space:]|[:punct:]]/_/g' <<< "$TITLE")"
           {
             printf '%s\n' "---"
@@ -114,6 +117,7 @@ runs:
         {
           echo "doc_title=${POST_TITLE}"
           echo "doc_action=${ACTION}"
+          echo "doc_stale_prefix=${STALE_PREFIX}"
           echo "doc_display_title<<${DELIM}"
           printf '%s\n' "$TITLE"
           echo "${DELIM}"
@@ -132,9 +136,19 @@ runs:
         TOKEN: ${{ inputs.GITHUB_TOKEN }}
         REPOSITORY: ${{ github.repository }}
         ACTION: ${{ env.doc_action }}
+        DOC_TITLE: ${{ env.doc_title }}
+        STALE_PREFIX: ${{ env.doc_stale_prefix }}
         DISPLAY_TITLE: ${{ env.doc_display_title }}
       run: |
-        cp media/* "$DIR/bk/media/"
+        # the generated files depend only on the issue payload, never on the repo tree, so park them
+        # outside the worktree; each attempt then just re-applies them onto a freshly fetched tip.
+        # no stash, no merge, nothing for git to resolve.
+        SCRATCH="$RUNNER_TEMP/issue2md-out"
+        rm -rf "$SCRATCH"
+        mkdir -p "$SCRATCH/media"
+        cp "$DIR/${DOC_TITLE}.md" "$SCRATCH/doc.md"
+        cp "$DIR/bk/${DOC_TITLE}.md" "$SCRATCH/bk.md"
+        cp media/* "$SCRATCH/media/" 2>/dev/null || true
         REMOTE="https://${TOKEN}@github.com/${REPOSITORY}"
         git config user.email "${ACTOR}@users.noreply.github.com"
         git config user.name "$ACTOR"
@@ -143,35 +157,31 @@ runs:
         else
           COMMIT_MSG="新增了 ${DISPLAY_TITLE}"
         fi
-        # stash the generated/modified files (new + tracked) before switching branches, so none of it is lost
-        HAS_CHANGES=$(git status --porcelain)
-        if [ -n "$HAS_CHANGES" ]; then
-          git stash push --include-untracked -m "issue2post changes"
-        fi
+        # worktree copy is redundant now, so drop it and keep checkout conflict-free
+        git reset --hard HEAD
+        git clean -fd
         for i in 1 2 3 4 5; do
           git fetch "$REMOTE" "$BRANCH"
           git checkout -B "$BRANCH" FETCH_HEAD
-          if [ -n "$HAS_CHANGES" ] && ! git stash apply; then
-            # this run's generated content is authoritative for its own output files; let it win any conflict
-            CONFLICTED=$(git diff --name-only --diff-filter=U)
-            if [ -n "$CONFLICTED" ]; then
-              git checkout --theirs -- $CONFLICTED
-              git add -- $CONFLICTED
-            fi
+          # this issue may have written a file under a previous title
+          if [ -n "$STALE_PREFIX" ]; then
+            rm -f "$DIR"/${STALE_PREFIX}*
           fi
+          mkdir -p "$DIR/bk/media"
+          cp "$SCRATCH/doc.md" "$DIR/${DOC_TITLE}.md"
+          cp "$SCRATCH/bk.md" "$DIR/bk/${DOC_TITLE}.md"
+          cp "$SCRATCH"/media/* "$DIR/bk/media/" 2>/dev/null || true
           git add "$DIR"
           git status
           # a rerun with identical content leaves nothing to commit, which is not a failure
           if ! git commit -m "$COMMIT_MSG"; then
             echo "nothing to commit"
-            git stash drop 2>/dev/null || true
             exit 0
           fi
           if git push "$REMOTE" "$BRANCH"; then
-            git stash drop 2>/dev/null || true
             exit 0
           fi
-          echo "push rejected (attempt $i), retrying after fresh fetch..."
+          echo "push rejected (attempt $i), retrying against fresh tip..."
           sleep $((i * 3))
         done
         echo "::error::push to $BRANCH failed after retries"
