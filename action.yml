@@ -138,23 +138,41 @@ runs:
         REMOTE="https://${TOKEN}@github.com/${REPOSITORY}"
         git config user.email "${ACTOR}@users.noreply.github.com"
         git config user.name "$ACTOR"
-        # stash the generated/modified files (new + tracked) before switching branches, so none of it is lost
-        HAS_CHANGES=$(git status --porcelain)
-        if [ -n "$HAS_CHANGES" ]; then
-          git stash push --include-untracked -m "issue2post changes"
-        fi
-        git fetch "$REMOTE" "$BRANCH"
-        git checkout -B "$BRANCH" FETCH_HEAD
-        if [ -n "$HAS_CHANGES" ]; then
-          git stash pop
-        fi
-        git add "$DIR"
-        git status
         if [ "$ACTION" == "update" ]; then
           COMMIT_MSG="更新了 ${DISPLAY_TITLE}"
         else
           COMMIT_MSG="新增了 ${DISPLAY_TITLE}"
         fi
-        # a rerun with identical content leaves nothing to commit, which is not a failure
-        git commit -m "$COMMIT_MSG" || echo "nothing to commit"
-        git push "$REMOTE" "$BRANCH"
+        # stash the generated/modified files (new + tracked) before switching branches, so none of it is lost
+        HAS_CHANGES=$(git status --porcelain)
+        if [ -n "$HAS_CHANGES" ]; then
+          git stash push --include-untracked -m "issue2post changes"
+        fi
+        for i in 1 2 3 4 5; do
+          git fetch "$REMOTE" "$BRANCH"
+          git checkout -B "$BRANCH" FETCH_HEAD
+          if [ -n "$HAS_CHANGES" ] && ! git stash apply; then
+            # this run's generated content is authoritative for its own output files; let it win any conflict
+            CONFLICTED=$(git diff --name-only --diff-filter=U)
+            if [ -n "$CONFLICTED" ]; then
+              git checkout --ours -- $CONFLICTED
+              git add -- $CONFLICTED
+            fi
+          fi
+          git add "$DIR"
+          git status
+          # a rerun with identical content leaves nothing to commit, which is not a failure
+          if ! git commit -m "$COMMIT_MSG"; then
+            echo "nothing to commit"
+            git stash drop 2>/dev/null || true
+            exit 0
+          fi
+          if git push "$REMOTE" "$BRANCH"; then
+            git stash drop 2>/dev/null || true
+            exit 0
+          fi
+          echo "push rejected (attempt $i), retrying after fresh fetch..."
+          sleep $((i * 3))
+        done
+        echo "::error::push to $BRANCH failed after retries"
+        exit 1
