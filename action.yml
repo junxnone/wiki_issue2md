@@ -155,7 +155,7 @@ runs:
             # this run's generated content is authoritative for its own output files; let it win any conflict
             CONFLICTED=$(git diff --name-only --diff-filter=U)
             if [ -n "$CONFLICTED" ]; then
-              git checkout --ours -- $CONFLICTED
+              git checkout --theirs -- $CONFLICTED
               git add -- $CONFLICTED
             fi
           fi
